@@ -217,7 +217,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Intent emailIntent = new Intent(Intent.ACTION_SEND);
         emailIntent.setData(Uri.parse("mailto:"));
         emailIntent.setType("vnd.android.cursor.dir/email");
-        emailIntent.putExtra(Intent.EXTRA_EMAIL, TO);
         emailIntent.putExtra(Intent.EXTRA_STREAM, path);
         startActivity(Intent.createChooser(emailIntent, "Send mail..."));
     }
