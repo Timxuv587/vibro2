@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         dataDisplay3 = findViewById(R.id.visualize3);
         String path = this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
         Log.e("Target",path);
-        storageData = new File(path + "/data.txt");
+        storageData = new File(path + "/data.csv");
         //new testTimer();
         try{
             storageData.createNewFile();
