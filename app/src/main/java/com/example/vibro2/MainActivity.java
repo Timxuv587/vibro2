@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileWriter;
 import android.net.Uri;
+
+import java.io.PrintWriter;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -37,15 +39,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     //Variable for control vibration
     public Vibrator vibe;
-    public VibrationEffect effect;
-    public int strength;
-    public int cycle;
-    public int r;
-
     public Button start20;
-    public Button start100;
-    public EditText inputPattern;
-    public EditText inputRepeat;
+    public Button delete;
+    public Button stop;
+    public EditText cycle;
+    public EditText r;
+    public EditText repeat;
     //Variable for data and status display
     public float data1 = 0;
     public float data2 = 0;
@@ -65,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //Store data
     File storageData;
     FileWriter fw;
+    String path;
 
 
     //testTimer run data collection in 20Hz
@@ -99,47 +99,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        path = this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        inputPattern = findViewById(R.id.inputPattern);
-        inputPattern.setText("0;100");
-        inputRepeat = findViewById(R.id.inputRepeat);
-        inputRepeat.setText("-1");
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
-        vibe = (Vibrator) getSystemService(this.VIBRATOR_SERVICE);
-        start20 = findViewById(R.id.button1);
-        start20.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                String[] input = inputPattern.getText().toString().split(";");
-                long[] pattern = new long[input.length];
-                for(int i=0; i < input.length; i++)
-                    pattern[i] = Long.valueOf(input[i]);
-                int repeat = Integer.valueOf(inputRepeat.getText().toString());
-                vibe.vibrate(pattern, repeat);
-            }
-        });
-        fab.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                sendEmail("1430415000@qq.com",storageData);
-            }
-        });
-        //Setting accelerometer
-        accelerometerManager = (SensorManager)getSystemService(this.SENSOR_SERVICE);
-        accelerometer = accelerometerManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        dataDisplay1 = findViewById(R.id.visualize1);
-        dataDisplay2 = findViewById(R.id.visualize2);
-        dataDisplay3 = findViewById(R.id.visualize3);
-        String path = this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+        //Setting input
+        cycle = findViewById(R.id.inputCycle);
+        cycle.setText("100");
+        r = findViewById(R.id.inputRatio);
+        r.setText("0.5");
+        repeat = findViewById(R.id.inputRepeat);
+        repeat.setText("1");
+
+        //Setting File writing function
         Log.e("Target",path);
         storageData = new File(path + "/data.csv");
         //new testTimer();
@@ -155,6 +129,61 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         catch(IOException e){
             Log.e("Failure","fail to create writing fail");
         }
+
+        //Setting Button function
+        FloatingActionButton fab = findViewById(R.id.fab);
+        vibe = (Vibrator) getSystemService(this.VIBRATOR_SERVICE);
+        start20 = findViewById(R.id.button1);
+        delete = findViewById(R.id.button2);
+        stop = findViewById(R.id.button3);
+        start20.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                int c = Integer.valueOf(cycle.getText().toString());
+                Float ratio = Float.parseFloat(r.getText().toString());
+                int rep = Integer.valueOf(repeat.getText().toString())*2;
+                long[] pattern = new long[rep];
+                int vib = (int)(c*ratio);
+                int space = c - vib;
+                for(int i=0; i < rep; i++)
+                    if(i % 2 == 0)
+                        pattern[i] = space;
+                    else
+                        pattern[i] = vib;
+                vibe.vibrate(pattern,-1);
+
+            }
+        });
+        stop.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Vibrator tempt = vibe;
+                vibe.cancel();
+                vibe = tempt;
+            }
+        });
+        fab.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                sendEmail("1430415000@qq.com",storageData);
+            }
+        });
+        delete.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                try{
+                    PrintWriter writer = new PrintWriter(storageData);
+                    writer.print("");
+                    writer.close();
+                }
+                catch(java.io.FileNotFoundException e){
+                    Log.e("Failure","File not found");
+                }
+            }
+        });
+
+        //Setting accelerometer
+        accelerometerManager = (SensorManager)getSystemService(this.SENSOR_SERVICE);
+        accelerometer = accelerometerManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        dataDisplay1 = findViewById(R.id.visualize1);
+        dataDisplay2 = findViewById(R.id.visualize2);
+        dataDisplay3 = findViewById(R.id.visualize3);
 
     }
 
