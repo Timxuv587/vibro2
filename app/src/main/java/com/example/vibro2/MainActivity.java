@@ -8,6 +8,8 @@ import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileWriter;
@@ -32,19 +34,27 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.media.MediaRecorder;
 import android.os.Environment;
+
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
     //Variable for control vibration
+    public boolean isVibrate;
+    public long time_ms;
     public Vibrator vibe;
     public Button start20;
-    public Button delete;
     public Button stop;
+    public Button frequencyTest;
     public EditText cycle;
     public EditText r;
     public EditText repeat;
+    public EditText weight;
+    public EditText ID;
+    public EditText fruit;
+    public EditText delay;
     //Variable for data and status display
     public float data1 = 0;
     public float data2 = 0;
@@ -61,19 +71,39 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public Sensor gyroscope;
     public SensorManager gyroscopeManager;
 
+    //Microphone function
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    private boolean permissionToRecordAccepted = false;
+    private String [] permissions = {Manifest.permission.RECORD_AUDIO};
+    private MediaRecorder recorder = null;
+
     //Store data
     File storageData;
     FileWriter fw;
     String path;
 
 
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//        switch (requestCode){
+//            case REQUEST_RECORD_AUDIO_PERMISSION:
+//                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+//                break;
+//        }
+//        if (!permissionToRecordAccepted ) finish();
+//
+//    }
+
     //testTimer run data collection in 20Hz
     public class testTimer {
         Timer timer;
-        int time = 0;
-        public testTimer() {
+        int delay;
+        public testTimer(int d) {
+            delay = d;
             timer = new Timer();
-            timer.schedule(new RemindTask(), 20, 100);
+            Log.e("delay",delay+"");
+            timer.schedule(new RemindTask(), delay);
         }
 
         class RemindTask extends TimerTask {
@@ -81,22 +111,58 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        time ++;
-                        if(fw != null)
-                            try{
-                                fw.append(data1 + "," + data2 + "," + data3 + '\n');
-                            }
-                            catch(IOException e){
-                                Log.e("Failuer","no exist");
-                            }
-                        dataDisplay1.setText(data1+"");
-                        dataDisplay2.setText(data2+"");
-                        dataDisplay3.setText(data3+"");
+                        isVibrate = false;
+                        TextView show = findViewById(R.id.textView4);
+                        show.setText("Wait");
+//                        try{
+//                            PrintWriter pw = new PrintWriter(storageData);
+//                            pw.print(final_string);
+//                            pw.close();
+//                        }
+//                        catch(IOException e){
+//                            Log.e("Failure","File printer fail");
+//                        }
+
+
                     }
                 });
             }
+        }    }
+    public class delayTimer {
+        Timer timer;
+        int delay;
+        public delayTimer(int d) {
+            delay = d;
+            timer = new Timer();
+            Log.e("delay",delay+"");
+            timer.schedule(new RemindTask(), delay);
+
         }
-    }
+
+        class RemindTask extends TimerTask {
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        TextView show = findViewById(R.id.textView4);
+                        show.setText("Put it now");
+//                        recorder.stop();
+//                        recorder.release();
+//                        recorder = null;
+//                        try{
+//                            PrintWriter pw = new PrintWriter(storageData);
+//                            pw.print(final_string);
+//                            pw.close();
+//                        }
+//                        catch(IOException e){
+//                            Log.e("Failure","File printer fail");
+//                        }
+
+
+                    }
+                });
+            }
+        }    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         path = this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
@@ -112,45 +178,71 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         r.setText("0.5");
         repeat = findViewById(R.id.inputRepeat);
         repeat.setText("1");
-
+        weight = findViewById(R.id.inputWeight);
+        ID = findViewById(R.id.inputID);
+        fruit = findViewById(R.id.inputFruit);
+        delay = findViewById(R.id.inputDelay);
         //Setting File writing function
         Log.e("Target",path);
-        storageData = new File(path + "/data.csv");
-        //new testTimer();
-        try{
-            storageData.createNewFile();
-        }
-        catch(IOException e){
-            System.out.print("no exist");
-        }
-        try{
-            fw = new FileWriter(storageData, true) ;
-        }
-        catch(IOException e){
-            Log.e("Failure","fail to create writing fail");
-        }
-
         //Setting Button function
         FloatingActionButton fab = findViewById(R.id.fab);
         vibe = (Vibrator) getSystemService(this.VIBRATOR_SERVICE);
         start20 = findViewById(R.id.button1);
-        delete = findViewById(R.id.button2);
         stop = findViewById(R.id.button3);
+        frequencyTest = findViewById(R.id.button4);
         start20.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                //Set vibration parameter
+                isVibrate = true;
                 int c = Integer.valueOf(cycle.getText().toString());
                 Float ratio = Float.parseFloat(r.getText().toString());
                 int rep = Integer.valueOf(repeat.getText().toString())*2;
-                long[] pattern = new long[rep];
+                long[] pattern = new long[rep+1];
+                pattern[0] = Integer.valueOf(delay.getText().toString());
                 int vib = (int)(c*ratio);
                 int space = c - vib;
-                for(int i=0; i < rep; i++)
+                for(int i=1; i < rep; i++)
                     if(i % 2 == 0)
                         pattern[i] = space;
                     else
                         pattern[i] = vib;
-                vibe.vibrate(pattern,-1);
 
+                //Create a new csv to store the data
+                storageData = new File(path + "/" + fruit.getText().toString() + "_"+ID.getText().toString() + "_"+weight.getText().toString() + "_"+time_ms+"_"+delay.getText().toString()+"_"+c+"_"+ratio+"_"+rep+".csv");
+                try{
+                    storageData.createNewFile();
+                }
+                catch(IOException e){
+                    System.out.print("no exist");
+                }
+                try{
+                    fw = new FileWriter(storageData,true);
+                    fw.append("time_tick,acc_X_value,acc_Y_value,acc_Z_value\n");
+                    fw.close();
+                }
+                catch(IOException e){
+                    Log.e("Failure","Fail to create file writer");
+                }
+                //Start vibration
+                vibe.vibrate(pattern,-1);
+                Log.e("pattern", pattern.toString());
+                new testTimer(c*rep/2+10);
+                new delayTimer(2000);
+//                new delayTimer((c*rep/2)/2);
+//                //Start recording
+//                recorder = new MediaRecorder();
+//                recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+//                recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+//                recorder.setOutputFile(path + "/" + fruit.getText().toString() + "_"+ID.getText().toString() + "_"+weight.getText().toString() + "_"+time_ms+"_"+delay.getText().toString()+"_"+c+"_"+ratio+"_"+rep+".csv");
+//                recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+//
+//                try {
+//                    recorder.prepare();
+//                } catch (IOException e) {
+//                    Log.e("Recording", "prepare() failed");
+//                }
+//
+//                recorder.start();
             }
         });
         stop.setOnClickListener(new View.OnClickListener() {
@@ -160,21 +252,57 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 vibe = tempt;
             }
         });
+        frequencyTest.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                //Set vibration parameter
+                isVibrate = true;
+                int c = Integer.valueOf(cycle.getText().toString());
+                Float ratio = Float.parseFloat("0");
+                int rep = Integer.valueOf(repeat.getText().toString())*2;
+                long[] pattern = new long[rep+1];
+                pattern[0] = Integer.valueOf(delay.getText().toString());
+                for(int i=1; i < rep; i++){
+                    if(i % 2 == 0)
+                    {
+                        double tempt = (i/2)*((double)c/((double)rep/2));
+                        int vib = (int)tempt;
+                        pattern[i] = vib;
+                    }
+                    else
+                    {
+                        double tempt =  (i-1)/2*((double)c/((double)rep/2));
+                        int vib = (int)tempt;
+                        int space = c - vib;
+                        pattern[i] = space;
+                    }
+
+                }
+
+
+                //Create a new csv to store the data
+                storageData = new File(path + "/" + fruit.getText().toString() + "_"+ID.getText().toString() + "_"+weight.getText().toString() + "_"+time_ms+"_"+delay.getText().toString()+"_"+c+"_"+ratio+"_"+rep+".csv");
+                try{
+                    storageData.createNewFile();
+                }
+                catch(IOException e){
+                    System.out.print("no exist");
+                }
+                try{
+                    fw = new FileWriter(storageData,true);
+                    fw.append("time_tick,acc_X_value,acc_Y_value,acc_Z_value\n");
+                    fw.close();
+                }
+                catch(IOException e){
+                    Log.e("Failure","Fail to create file writer");
+                }
+                vibe.vibrate(pattern,-1);
+                Log.e("pattern", pattern.toString());
+                new testTimer(c*rep/2+10);
+            }
+        });
         fab.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 sendEmail("1430415000@qq.com",storageData);
-            }
-        });
-        delete.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                try{
-                    PrintWriter writer = new PrintWriter(storageData);
-                    writer.print("");
-                    writer.close();
-                }
-                catch(java.io.FileNotFoundException e){
-                    Log.e("Failure","File not found");
-                }
             }
         });
 
@@ -188,17 +316,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public final void onSensorChanged(SensorEvent event) {
-        long time_ms = System.currentTimeMillis() + (event.timestamp - SystemClock.elapsedRealtimeNanos()) / 1000000L;
+        time_ms = System.currentTimeMillis() + (event.timestamp - SystemClock.elapsedRealtimeNanos()) / 1000000L;
         data1 = event.values[0];
         data2 = event.values[1];
         data3 = event.values[2];
-        if(fw != null)
+//        Log.e(time_ms+"", isVibrate+"");
+        if(isVibrate){
+//                final_string=final_string.concat(time_ms+","+data1+","+data2+","+data3+"\n");
             try{
-                fw.append(time_ms+","+data1 + "," + data2 + "," + data3 + '\n');
+                fw = new FileWriter(storageData,true);
+                fw.append(time_ms+","+data1+","+data2+","+data3+"\n");
+                fw.close();
             }
             catch(IOException e){
-                Log.e("Failure","no exist");
+                Log.e("Failure","Fail to create file writer");
             }
+        }
         dataDisplay1.setText(data1+"");
         dataDisplay2.setText(data2+"");
         dataDisplay3.setText(data3+"");
@@ -231,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onResume() {
         super.onResume();
-        accelerometerManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        accelerometerManager.registerListener(this, accelerometer, 2520);
     }
 
     @Override

@@ -1,15 +1,28 @@
 apply plugin: 'com.android.application'
-
+apply plugin: 'com.chaquo.python'
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
     defaultConfig {
+
         applicationId "com.example.vibro2"
         minSdkVersion 19
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
+        python {
+            pip{
+                install "numpy"
+                install "sklearn"
+                install "scipy"
+                install "pandas"
+                install "matplotlib"
+            }
+        }
     }
     buildTypes {
         release {
@@ -17,6 +30,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
 }
 
 dependencies {
