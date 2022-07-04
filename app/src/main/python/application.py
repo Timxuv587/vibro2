@@ -161,8 +161,8 @@ def main(src):
     #standard net intensity: 2.7
     time = 1.7 / np.asarray(intensity_no_load)
     intensity_net = np.asarray(intensity_no_load) - np.asarray(intensity_load)
-    return str(intensity_net*70/1.7*np.asarray(intensity_no_load))
-    #return str(np.asarray(intensity_no_load))
+    #return str(intensity_net*70/1.7*np.asarray(intensity_no_load))
+    return "Intensity no load="+str(np.asarray(intensity_no_load))+"\n intensity load="+str(np.asarray(intensity_load))
 
 
 
