@@ -75,7 +75,7 @@ def resample_df(df):
 def fruit(path,delay,starttime):
     df = pd.read_csv(path)
     df = resample_df(df)
-    df = df[(df['time_tick']>(starttime+delay+6500))&(df['time_tick']<(starttime+delay+7500))]
+    df = df[(df['time_tick']>(starttime+delay+5500))&(df['time_tick']<(starttime+delay+6500))]
     # df = df[(df['time_tick']>(starttime+delay+6000))&(df['time_tick']<(starttime+delay+8000))]
     df = pca_sensor_xyz_xy(df)
     # print(df)
@@ -162,7 +162,13 @@ def main(src):
     time = 1.7 / np.asarray(intensity_no_load)
     intensity_net = np.asarray(intensity_no_load) - np.asarray(intensity_load)
     #return str(intensity_net*70/1.7*np.asarray(intensity_no_load))
-    return "Intensity no load="+str(np.asarray(intensity_no_load))+"\n intensity load="+str(np.asarray(intensity_load))
+    intercept = 563.87
+    nl = np.asarray(intensity_no_load)[0]
+    l = np.asarray(intensity_load)[0]
+    diff = nl - l
+    coef = [1366.1233248,  -9501.57067288]
+    weight = coef[0]*diff+coef[1]*l+intercept
+    return "Estimate weight="+str(weight)
 
 
 

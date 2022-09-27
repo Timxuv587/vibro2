@@ -172,7 +172,7 @@ public class Application extends AppCompatActivity implements SensorEventListene
                         PyObject obj = pyobj.callAttr("main",fileName);
                         TextView show = findViewById(R.id.info);
                         String result = obj.toString();
-                        show.setText("The estimated weight is: " + result);
+                        show.setText("Result: " + result);
 
                     }
                 });
