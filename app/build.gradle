@@ -17,7 +17,7 @@ android {
         python {
             pip{
                 install "numpy"
-                install "sklearn"
+                install "scikit-learn"
                 install "scipy"
                 install "pandas"
                 install "matplotlib"
